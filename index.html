@@ -327,13 +327,14 @@
         /* Video Grids */
         #screenshareGrid {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 10px;
             justify-content: center;
             width: 100%;
         }
         #screenshareGrid .video-tile {
-            flex: 1 1 300px;
+            flex: 1 1 0;
+            min-width: 0;
             max-width: 100%;
         }
         #cameraGrid {
@@ -541,7 +542,8 @@
             .camera-7 .video-tile,
             .camera-8 .video-tile { width: calc(50% - 5px); max-width: none; }
             .preview-container { width: 90% !important; }
-            #screenshareGrid { flex-direction: column; }
+            #screenshareGrid { flex-wrap: wrap; }
+            #screenshareGrid .video-tile { flex: 1 1 100%; }
             .ctrl-btn { width: 48px; height: 48px; }
             .controls-bar { gap: 8px; padding: 10px 12px; }
         }
