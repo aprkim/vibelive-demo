@@ -1405,7 +1405,15 @@
     });
 
     $('liveToggleScreen').addEventListener('click', async () => {
-        await VibeLive.setScreenshare(!VibeLive.screenState.video);
+        const wantsToShare = !VibeLive.screenState.video;
+        if (wantsToShare) {
+            const activeScreenshares = screenshareGrid.querySelectorAll('.video-tile:not([style*="display: none"])').length;
+            if (activeScreenshares >= 2) {
+                showToast('Only 2 people can share screens at a time.', 'error');
+                return;
+            }
+        }
+        await VibeLive.setScreenshare(wantsToShare);
         updateLiveControls();
     });
 
