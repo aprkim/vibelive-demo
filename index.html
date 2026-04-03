@@ -308,20 +308,20 @@
         #liveScreen {
             display: none;
             flex: 1;
+            min-height: 0;
             flex-direction: column;
         }
         .live-content {
             flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 16px;
-            gap: 12px;
-            overflow: auto;
-            max-width: var(--max);
+            padding: 12px;
+            gap: 10px;
+            overflow: hidden;
             width: 100%;
-            margin: 0 auto;
         }
 
         /* Video Grids */
@@ -616,36 +616,48 @@
         .live-content.presentation-mode {
             flex-direction: column;
             align-items: stretch;
+            justify-content: stretch;
+            overflow: hidden;
         }
         .presentation-mode #screenshareGrid {
             flex: 1;
+            min-height: 0;
             display: flex;
-            align-items: center;
+            align-items: stretch;
             justify-content: center;
         }
         .presentation-mode #screenshareGrid .video-tile {
-            flex: 1 1 100%;
+            flex: 1 1 0;
             max-width: 100%;
-            max-height: calc(100vh - 200px);
+        }
+        .presentation-mode #screenshareGrid .video-tile .aspect-spacer {
+            display: none;
+        }
+        .presentation-mode #screenshareGrid .video-tile .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
         .presentation-mode #cameraGrid {
             flex: 0 0 auto;
             flex-wrap: nowrap;
             overflow-x: auto;
             gap: 8px;
-            justify-content: flex-start;
-            padding: 8px 0;
+            justify-content: center;
+            padding: 6px 0;
         }
         .presentation-mode #cameraGrid .video-tile {
-            flex: 0 0 180px;
-            width: 180px !important;
-            max-width: 180px !important;
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: calc(12.5% - 7px);
         }
         @media (max-width: 640px) {
+            .presentation-mode #cameraGrid {
+                justify-content: flex-start;
+            }
             .presentation-mode #cameraGrid .video-tile {
-                flex: 0 0 140px;
-                width: 140px !important;
-                max-width: 140px !important;
+                flex: 0 0 120px;
+                max-width: 120px;
             }
         }
 
