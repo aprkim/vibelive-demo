@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeLive Preview - 3 Participants + 2 Screen Shares</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --radius: 16px;
+            --max: 980px;
+            --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
+            --bg: #F5FAFC;
+            --card: #FFFFFF;
+            --soft: #F7F5FA;
+            --border: #E0E8F0;
+            --borderSoft: #DBE2EA;
+
+            --text: #1E293B;
+            --muted: #607088;
+            --muted2: #9CA3AF;
+
+            --accent: #6E6282;
+            --accentHover: #585070;
+            --accentSoft: rgba(110,98,130,.12);
+            --accentBorder: rgba(110,98,130,.30);
+
+            --liveBg: #E8F4ED;
+            --liveBorder: #A6C5A3;
+            --liveText: #324252;
+
+            --dangerBg: #FEF2F2;
+            --dangerBorder: #fca5a5;
+            --dangerText: #b91c1c;
+
+            --overlay: rgba(30, 41, 59, 0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg: #13101E;
+            --card: #1A1626;
+            --soft: #241F32;
+            --border: #332D44;
+            --borderSoft: #443C58;
+
+            --text: #E5E2EB;
+            --muted: #A09BB0;
+            --muted2: #6B6580;
+
+            --accent: #9B8CB8;
+            --accentHover: #B0A2C8;
+            --accentSoft: rgba(155,140,184,.18);
+            --accentBorder: rgba(155,140,184,.40);
+
+            --liveBg: rgba(16,185,129,.15);
+            --liveBorder: rgba(16,185,129,.4);
+            --liveText: #a7f3d0;
+
+            --dangerBg: rgba(239,68,68,.15);
+            --dangerBorder: rgba(239,68,68,.4);
+            --dangerText: #fca5a5;
+
+            --overlay: rgba(0,0,0,0.6);
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s, color 0.2s;
+            overflow: hidden;
+        }
+
+        /* Theme Toggle */
+        #themeToggle {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #themeToggle:hover { border-color: var(--accent); }
+        #themeToggle svg { width: 18px; height: 18px; }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .topbar-left { font-weight: 700; font-size: 15px; color: var(--accent); }
+        .topbar-right { display: flex; align-items: center; gap: 8px; }
+        .room-code-pill {
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accentSoft);
+            border: 1px solid var(--accentBorder);
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+        .topbar-btn {
+            background: var(--soft);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s;
+        }
+        .topbar-btn:hover { border-color: var(--accent); color: var(--text); }
+
+        /* Live Screen */
+        .live-screen {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .live-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            gap: 10px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* Video Grids */
+        #screenshareGrid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+        #screenshareGrid .video-tile {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 100%;
+        }
+        #cameraGrid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Video Tile */
+        .video-tile {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: var(--soft);
+            border: 1px solid var(--border);
+        }
+        .video-tile[data-is-local="true"] { border: 2px solid var(--accentBorder); }
+
+        .video-tile .aspect-spacer {
+            display: block;
+            padding-top: 56.25%;
+        }
+
+        .video-container {
+            position: absolute;
+            inset: 0;
+        }
+
+        .video-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--soft);
+            color: var(--muted);
+        }
+        .video-placeholder.hidden { display: none !important; }
+        .video-placeholder .initials {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accentSoft);
+            border: 2px solid var(--accentBorder);
+            color: var(--accent);
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Screenshare placeholder */
+        .screen-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--soft) 0%, var(--card) 100%);
+            color: var(--muted);
+        }
+        .screen-placeholder svg { width: 32px; height: 32px; opacity: 0.5; }
+        .screen-placeholder span { font-size: 12px; font-weight: 600; }
+
+        .member-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(transparent, rgba(0,0,0,.5));
+        }
+        .member-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,.4);
+        }
+        .member-indicators {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--liveBg);
+            color: var(--liveText);
+            border: 1px solid var(--liveBorder);
+        }
+
+        .indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .indicator svg { width: 14px; height: 14px; }
+        .indicator.on {
+            background: rgba(110,98,130,.7);
+            color: #fff;
+        }
+        .indicator.off {
+            background: rgba(185,28,28,.7);
+            color: #fff;
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .ctrl-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--soft);
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .ctrl-btn:hover { border-color: var(--accent); }
+        .ctrl-btn.active { background: var(--accentSoft); border-color: var(--accent); color: var(--accent); }
+        .ctrl-btn.danger {
+            background: var(--dangerBg);
+            border-color: var(--dangerBorder);
+            color: var(--dangerText);
+            margin-left: 16px;
+        }
+        .ctrl-btn.danger:hover { background: var(--dangerBorder); color: #fff; }
+        .ctrl-btn svg { width: 20px; height: 20px; }
+
+        /* Presentation mode */
+        .live-content.presentation-mode {
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: stretch;
+            overflow: hidden;
+        }
+        .presentation-mode #screenshareGrid {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .presentation-mode #screenshareGrid .video-tile {
+            flex: 1 1 0;
+            max-width: 100%;
+        }
+        .presentation-mode #screenshareGrid .video-tile .aspect-spacer {
+            display: none;
+        }
+        .presentation-mode #screenshareGrid .video-tile .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .presentation-mode #cameraGrid {
+            flex: 0 0 auto;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 8px;
+            justify-content: center;
+            padding: 6px 0;
+        }
+        .presentation-mode #cameraGrid .video-tile {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: calc(33.33% - 6px);
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .topbar { padding: 8px 12px; }
+            .topbar-left { font-size: 13px; }
+            .room-code-pill { font-size: 11px; padding: 3px 7px; }
+            .topbar-btn { font-size: 11px; padding: 3px 8px; }
+
+            .live-content { padding: 8px; gap: 6px; }
+
+            .presentation-mode #screenshareGrid { gap: 6px; }
+            .presentation-mode #cameraGrid {
+                justify-content: flex-start;
+                gap: 6px;
+            }
+            .presentation-mode #cameraGrid .video-tile {
+                flex: 0 0 120px;
+                max-width: 120px;
+            }
+
+            .video-placeholder .initials { width: 40px; height: 40px; font-size: 16px; }
+            .member-info { padding: 4px 6px; }
+            .member-name { font-size: 10px; }
+            .status-badge { font-size: 8px; padding: 1px 4px; }
+            .indicator { width: 20px; height: 20px; }
+            .indicator svg { width: 11px; height: 11px; }
+            .video-tile { border-radius: 10px; }
+
+            .ctrl-btn { width: 48px; height: 48px; min-width: 48px; }
+            .controls-bar { gap: 8px; padding: 10px 12px; }
+        }
+
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .topbar { padding: 4px 12px; }
+            .topbar-left { font-size: 12px; }
+            .live-content { padding: 4px; gap: 4px; }
+            .controls-bar { padding: 6px 12px; }
+            .ctrl-btn { width: 40px; height: 40px; border-radius: 10px; }
+            .member-info { padding: 2px 4px; }
+            .member-name { font-size: 9px; }
+            .video-placeholder .initials { width: 32px; height: 32px; font-size: 14px; }
+            .presentation-mode #cameraGrid .video-tile {
+                flex: 0 0 100px;
+                max-width: 100px;
+            }
+        }
+
+        /* Preview badge */
+        .preview-badge {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            z-index: 200;
+            letter-spacing: 0.5px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
+        }
+    </style>
+</head>
+<body>
+
+<span class="preview-badge">PREVIEW - 3 participants + 2 screen shares</span>
+
+<!-- Theme Toggle -->
+<button id="themeToggle" title="Toggle theme">
+    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<!-- Topbar -->
+<div class="topbar">
+    <div class="topbar-left">VibeLive</div>
+    <div class="topbar-right">
+        <span class="room-code-pill">DEMO-3P2S</span>
+        <button class="topbar-btn">Code</button>
+        <button class="topbar-btn">Link</button>
+    </div>
+</div>
+
+<!-- Live Screen -->
+<div class="live-screen">
+    <div class="live-content presentation-mode">
+        <div id="screenshareGrid"></div>
+        <div id="cameraGrid"></div>
+    </div>
+    <div class="controls-bar">
+        <button class="ctrl-btn active" title="Camera on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </button>
+        <button class="ctrl-btn active" title="Mic on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <button class="ctrl-btn active" title="Screen sharing">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button class="ctrl-btn danger" title="Leave room">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const ICONS = {
+        camOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+        camOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+        micOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+        micOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.5-.35 2.18"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+        screen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'
+    };
+
+    const participants = [
+        { name: 'April Kim', isLocal: true, camOn: true, micOn: true, sharing: true },
+        { name: 'Jordan Lee', isLocal: false, camOn: true, micOn: true, sharing: true },
+        { name: 'Sam Chen', isLocal: false, camOn: true, micOn: false, sharing: false }
+    ];
+
+    const colors = ['#6E6282','#8B5CF6','#3B82F6'];
+
+    function getInitials(name) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0][0].toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    const screenshareGrid = document.getElementById('screenshareGrid');
+    const cameraGrid = document.getElementById('cameraGrid');
+
+    // Build screenshare tiles
+    participants.forEach((p, i) => {
+        if (!p.sharing) return;
+        const tile = document.createElement('div');
+        tile.className = 'video-tile';
+        tile.innerHTML = `
+            <div class="aspect-spacer"></div>
+            <div class="video-container">
+                <div class="screen-placeholder">
+                    ${ICONS.screen}
+                    <span>${p.isLocal ? 'Your Screen' : p.name + "'s Screen"}</span>
+                </div>
+            </div>
+            <div class="member-info">
+                <span class="member-name">${p.isLocal ? 'Your Screen' : p.name + "'s Screen"}</span>
+                <div class="member-indicators">
+                    <span class="status-badge">LIVE</span>
+                </div>
+            </div>
+        `;
+        screenshareGrid.appendChild(tile);
+    });
+
+    // Build camera tiles
+    participants.forEach((p, i) => {
+        const tile = document.createElement('div');
+        tile.className = 'video-tile';
+        if (p.isLocal) tile.dataset.isLocal = 'true';
+
+        const label = p.isLocal ? `${p.name} (You)` : p.name;
+
+        tile.innerHTML = `
+            <div class="aspect-spacer"></div>
+            <div class="video-container">
+                <div class="video-placeholder${p.camOn ? ' hidden' : ''}">
+                    <div class="initials">${getInitials(p.name)}</div>
+                </div>
+                ${p.camOn ? `<canvas class="mock-cam" width="320" height="180" style="width:100%;height:100%;object-fit:cover;display:block;"></canvas>` : ''}
+            </div>
+            <div class="member-info">
+                <span class="member-name">${label}</span>
+                <div class="member-indicators">
+                    <span class="status-badge">LIVE</span>
+                    <span class="indicator ${p.camOn ? 'on' : 'off'}" title="Camera">${p.camOn ? ICONS.camOn : ICONS.camOff}</span>
+                    <span class="indicator ${p.micOn ? 'on' : 'off'}" title="Mic">${p.micOn ? ICONS.micOn : ICONS.micOff}</span>
+                </div>
+            </div>
+        `;
+        cameraGrid.appendChild(tile);
+
+        if (p.camOn) {
+            const canvas = tile.querySelector('.mock-cam');
+            const ctx = canvas.getContext('2d');
+            const color = colors[i % colors.length];
+            const grad = ctx.createLinearGradient(0, 0, 320, 180);
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, shiftColor(color, 40));
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 320, 180);
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.font = 'bold 60px system-ui';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(getInitials(p.name), 160, 90);
+        }
+    });
+
+    function shiftColor(hex, amount) {
+        const num = parseInt(hex.slice(1), 16);
+        let r = Math.min(255, ((num >> 16) & 0xFF) + amount);
+        let g = Math.min(255, ((num >> 8) & 0xFF) + amount);
+        let b = Math.min(255, (num & 0xFF) + amount);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // Theme toggle
+    function initTheme() {
+        const saved = localStorage.getItem('tinyroom-theme');
+        if (saved) setTheme(saved);
+    }
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('tinyroom-theme', theme);
+        const sunIcon = document.querySelector('#themeToggle .sun-icon');
+        const moonIcon = document.querySelector('#themeToggle .moon-icon');
+        if (theme === 'dark') {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+        } else {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+        }
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    initTheme();
+})();
+</script>
+</body>
+</html>
