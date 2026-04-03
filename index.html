@@ -342,7 +342,10 @@
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
+            align-content: center;
             width: 100%;
+            flex: 1;
+            min-height: 0;
         }
 
         /* Video Tile */
@@ -489,13 +492,19 @@
         .ctrl-btn.danger:hover { background: var(--dangerBorder); color: #fff; }
         .ctrl-btn svg { width: 20px; height: 20px; }
 
-        /* Tile sizing by count */
-        .camera-1 .video-tile { width: min(100%, calc((100vh - 220px) * 16 / 9)); }
-        .camera-2 .video-tile { width: calc(50% - 5px); max-width: 480px; }
-        .camera-3 .video-tile { width: calc(33.33% - 7px); max-width: 360px; }
-        .camera-4 .video-tile { width: calc(50% - 5px); max-width: 420px; }
-        .camera-5 .video-tile, .camera-6 .video-tile { width: calc(33.33% - 7px); max-width: 340px; }
-        .camera-7 .video-tile, .camera-8 .video-tile { width: calc(25% - 8px); max-width: 280px; }
+        /* Tile sizing by count — fill space fully */
+        /* 1: single centered, constrained by height */
+        .camera-1 .video-tile { width: min(100%, calc((100vh - 180px) * 16 / 9)); }
+        /* 2: side by side */
+        .camera-2 .video-tile { width: calc(50% - 5px); }
+        /* 3: three across */
+        .camera-3 .video-tile { width: calc(33.33% - 7px); }
+        /* 4: 2×2 grid */
+        .camera-4 .video-tile { width: calc(50% - 5px); }
+        /* 5-6: 3 across, 2 rows */
+        .camera-5 .video-tile, .camera-6 .video-tile { width: calc(33.33% - 7px); }
+        /* 7-8: 4 across, 2 rows */
+        .camera-7 .video-tile, .camera-8 .video-tile { width: calc(25% - 8px); }
 
         /* Kicked Modal */
         #kickedOverlay {
