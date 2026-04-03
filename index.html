@@ -533,19 +533,83 @@
 
         /* Mobile */
         @media (max-width: 640px) {
-            #cameraGrid { flex-direction: row; flex-wrap: wrap; }
-            .camera-2 .video-tile,
-            .camera-3 .video-tile { width: 100%; max-width: none; }
-            .camera-4 .video-tile,
+            /* Topbar compact */
+            .topbar { padding: 8px 12px; }
+            .topbar-left { font-size: 13px; }
+            .room-code-pill { font-size: 11px; padding: 3px 7px; }
+            .topbar-btn { font-size: 11px; padding: 3px 8px; }
+
+            /* Entry screen */
+            #entryScreen { padding: 16px; gap: 12px; }
+            .entry-card { padding: 16px; }
+            .preview-container { width: 95% !important; }
+
+            /* Camera grid */
+            #cameraGrid { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+            .camera-1 .video-tile { width: 100%; }
+            .camera-2 .video-tile { width: calc(50% - 3px); max-width: none; }
+            .camera-3 .video-tile { width: calc(50% - 3px); max-width: none; }
+            .camera-4 .video-tile { width: calc(50% - 3px); max-width: none; }
+            .camera-5 .video-tile,
+            .camera-6 .video-tile { width: calc(50% - 3px); max-width: none; }
+            .camera-7 .video-tile,
+            .camera-8 .video-tile { width: calc(50% - 3px); max-width: none; }
+
+            /* Screenshare grid */
+            #screenshareGrid { flex-wrap: wrap; gap: 6px; }
+            #screenshareGrid .video-tile { flex: 1 1 100%; }
+
+            /* Smaller tiles: smaller initials */
+            .video-placeholder .initials { width: 40px; height: 40px; font-size: 16px; }
+            .member-info { padding: 4px 6px; }
+            .member-name { font-size: 10px; }
+            .status-badge { font-size: 8px; padding: 1px 4px; }
+            .indicator { width: 20px; height: 20px; }
+            .indicator svg { width: 11px; height: 11px; }
+
+            /* Controls bar: larger touch targets */
+            .ctrl-btn { width: 48px; height: 48px; min-width: 48px; }
+            .controls-bar { gap: 8px; padding: 10px 12px; }
+
+            /* Video tiles: smaller radius */
+            .video-tile { border-radius: 10px; }
+
+            /* Spotlight always visible on touch */
+            .video-tile .spotlight-btn { opacity: 0.7; width: 24px; height: 24px; top: 4px; right: 4px; }
+        }
+
+        /* Landscape mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .topbar { padding: 4px 12px; }
+            .topbar-left { font-size: 12px; }
+
+            .live-content { padding: 6px; gap: 6px; }
+
+            /* In landscape, prefer side-by-side camera tiles */
+            #cameraGrid { gap: 4px; }
+            .camera-1 .video-tile { width: 60%; }
+            .camera-2 .video-tile { width: calc(50% - 2px); max-width: none; }
+            .camera-3 .video-tile,
+            .camera-4 .video-tile { width: calc(50% - 2px); max-width: none; }
             .camera-5 .video-tile,
             .camera-6 .video-tile,
             .camera-7 .video-tile,
-            .camera-8 .video-tile { width: calc(50% - 5px); max-width: none; }
-            .preview-container { width: 90% !important; }
-            #screenshareGrid { flex-wrap: wrap; }
-            #screenshareGrid .video-tile { flex: 1 1 100%; }
-            .ctrl-btn { width: 48px; height: 48px; }
-            .controls-bar { gap: 8px; padding: 10px 12px; }
+            .camera-8 .video-tile { width: calc(25% - 3px); max-width: none; }
+
+            /* Shorter controls bar */
+            .controls-bar { padding: 6px 12px; }
+            .ctrl-btn { width: 40px; height: 40px; border-radius: 10px; }
+
+            /* Smaller member info */
+            .member-info { padding: 2px 4px; }
+            .member-name { font-size: 9px; }
+            .video-placeholder .initials { width: 32px; height: 32px; font-size: 14px; }
+
+            /* Presentation mode: screenshares side-by-side, camera strip compact */
+            .presentation-mode #cameraGrid .video-tile {
+                flex: 0 0 100px;
+                max-width: 100px;
+            }
         }
 
         /* Spotlight/Fullscreen Mode */
