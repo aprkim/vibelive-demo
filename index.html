@@ -73,10 +73,11 @@
             font-family: var(--sans);
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             transition: background 0.2s, color 0.2s;
+            overflow: hidden;
         }
 
         /* Theme Toggle */
@@ -161,6 +162,7 @@
             justify-content: center;
             padding: 24px;
             gap: 16px;
+            overflow-y: auto;
         }
         .entry-card {
             background: var(--card);
