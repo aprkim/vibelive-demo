@@ -691,33 +691,66 @@
         .video-tile.spotlighted .video-container { position: absolute; inset: 0; }
         .video-tile.spotlighted .video-container video { object-fit: contain; background: #000; }
 
-        /* Drag-to-reorder */
-        .video-tile.dragging { opacity: 0.5; }
-        .video-tile.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accentBorder); }
+        /* Free-floating tile */
+        .video-tile.floating {
+            position: fixed;
+            z-index: 100;
+            transition: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+        .video-tile.floating .aspect-spacer { display: none; }
+        .video-tile.floating .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .video-tile.dragging { opacity: 0.8; cursor: grabbing; }
 
         /* Resize handle */
         .video-tile .resize-handle {
             position: absolute;
             bottom: 0;
             right: 0;
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             cursor: nwse-resize;
             z-index: 5;
             opacity: 0;
             transition: opacity 0.2s;
         }
-        .video-tile:hover .resize-handle { opacity: 0.6; }
+        .video-tile:hover .resize-handle,
+        .video-tile.floating .resize-handle { opacity: 0.7; }
         .resize-handle::after {
             content: '';
             position: absolute;
-            bottom: 3px;
-            right: 3px;
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid rgba(255,255,255,0.6);
-            border-bottom: 2px solid rgba(255,255,255,0.6);
+            bottom: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid rgba(255,255,255,0.7);
+            border-bottom: 2px solid rgba(255,255,255,0.7);
         }
+
+        /* Reset button for floating tiles */
+        .video-tile .reset-btn {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            font-size: 14px;
+            line-height: 1;
+        }
+        .video-tile.floating .reset-btn { display: flex; }
 
         /* ═══════════════════════════════════════
            CASE 2 & 3: Presentation mode
@@ -1009,159 +1042,140 @@
         }
     }
 
-    // ── Drag to Reorder (camera grid only) ──
-    let dragSrc = null;
+    // ── Free Move & Resize ──
 
-    function enableDrag(tile) {
-        tile.setAttribute('draggable', 'true');
-        tile.addEventListener('dragstart', (e) => {
-            if (tile.dataset.streamType !== 'camera') return;
-            dragSrc = tile;
-            tile.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        });
-        tile.addEventListener('dragend', () => {
-            tile.classList.remove('dragging');
-            cameraGrid.querySelectorAll('.video-tile').forEach(t => t.classList.remove('drag-over'));
-            dragSrc = null;
-        });
-        tile.addEventListener('dragover', (e) => {
-            if (!dragSrc || tile === dragSrc || tile.dataset.streamType !== 'camera') return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            tile.classList.add('drag-over');
-        });
-        tile.addEventListener('dragleave', () => tile.classList.remove('drag-over'));
-        tile.addEventListener('drop', (e) => {
-            e.preventDefault();
-            tile.classList.remove('drag-over');
-            if (!dragSrc || tile === dragSrc || tile.dataset.streamType !== 'camera') return;
-            const tiles = [...cameraGrid.children];
-            const fromIdx = tiles.indexOf(dragSrc);
-            const toIdx = tiles.indexOf(tile);
-            if (fromIdx < toIdx) {
-                cameraGrid.insertBefore(dragSrc, tile.nextSibling);
-            } else {
-                cameraGrid.insertBefore(dragSrc, tile);
-            }
-        });
-
-        // Touch drag support
-        let touchClone = null;
-        let touchStartX, touchStartY;
-        tile.addEventListener('touchstart', (e) => {
-            if (tile.dataset.streamType !== 'camera') return;
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            dragSrc = tile;
-        }, { passive: true });
-        tile.addEventListener('touchmove', (e) => {
-            if (!dragSrc || dragSrc !== tile) return;
-            const touch = e.touches[0];
-            const dx = Math.abs(touch.clientX - touchStartX);
-            const dy = Math.abs(touch.clientY - touchStartY);
-            if (dx > 10 || dy > 10) {
-                tile.classList.add('dragging');
-            }
-        }, { passive: true });
-        tile.addEventListener('touchend', (e) => {
-            if (!dragSrc || dragSrc !== tile) { dragSrc = null; return; }
-            tile.classList.remove('dragging');
-            if (!tile.classList.contains('dragging')) {
-                const touch = e.changedTouches[0];
-                const target = document.elementFromPoint(touch.clientX, touch.clientY);
-                const dropTile = target?.closest('.video-tile');
-                if (dropTile && dropTile !== tile && dropTile.dataset.streamType === 'camera' && cameraGrid.contains(dropTile)) {
-                    const tiles = [...cameraGrid.children];
-                    const fromIdx = tiles.indexOf(tile);
-                    const toIdx = tiles.indexOf(dropTile);
-                    if (fromIdx < toIdx) {
-                        cameraGrid.insertBefore(tile, dropTile.nextSibling);
-                    } else {
-                        cameraGrid.insertBefore(tile, dropTile);
-                    }
-                }
-            }
-            dragSrc = null;
-        });
+    function resetTile(tile) {
+        tile.classList.remove('floating');
+        tile.style.left = '';
+        tile.style.top = '';
+        tile.style.width = '';
+        tile.style.height = '';
+        // Return to its grid
+        const streamType = tile.dataset.streamType;
+        const grid = streamType === 'screenshare' ? screenshareGrid : cameraGrid;
+        if (!grid.contains(tile)) grid.appendChild(tile);
+        updateGridLayout();
     }
 
-    // ── Resize Tiles ──
+    function makeFloating(tile, x, y, w, h) {
+        tile.classList.add('floating');
+        tile.style.left = x + 'px';
+        tile.style.top = y + 'px';
+        tile.style.width = w + 'px';
+        tile.style.height = h + 'px';
+        // Move to body so it's above everything
+        document.body.appendChild(tile);
+    }
+
+    function enableDrag(tile) {
+        let startX, startY, startLeft, startTop, dragging = false;
+
+        function onDown(cx, cy) {
+            const rect = tile.getBoundingClientRect();
+            startX = cx;
+            startY = cy;
+
+            if (!tile.classList.contains('floating')) {
+                // Pop out of grid into floating
+                makeFloating(tile, rect.left, rect.top, rect.width, rect.height);
+            }
+            startLeft = parseFloat(tile.style.left);
+            startTop = parseFloat(tile.style.top);
+            dragging = false;
+        }
+
+        function onMove(cx, cy) {
+            const dx = cx - startX;
+            const dy = cy - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragging = true;
+            if (!dragging) return;
+            tile.classList.add('dragging');
+            tile.style.left = (startLeft + dx) + 'px';
+            tile.style.top = (startTop + dy) + 'px';
+        }
+
+        function onUp() {
+            tile.classList.remove('dragging');
+        }
+
+        // Mouse
+        tile.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.resize-handle') || e.target.closest('.spotlight-btn') || e.target.closest('.reset-btn')) return;
+            e.preventDefault();
+            onDown(e.clientX, e.clientY);
+            function mm(e) { onMove(e.clientX, e.clientY); }
+            function mu() { onUp(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); }
+            document.addEventListener('mousemove', mm);
+            document.addEventListener('mouseup', mu);
+        });
+
+        // Touch
+        tile.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.resize-handle') || e.target.closest('.spotlight-btn') || e.target.closest('.reset-btn')) return;
+            const t = e.touches[0];
+            onDown(t.clientX, t.clientY);
+            function tm(e) { const t = e.touches[0]; onMove(t.clientX, t.clientY); }
+            function te() { onUp(); document.removeEventListener('touchmove', tm); document.removeEventListener('touchend', te); }
+            document.addEventListener('touchmove', tm, { passive: true });
+            document.addEventListener('touchend', te);
+        }, { passive: true });
+    }
+
     function enableResize(tile) {
         const handle = document.createElement('div');
         handle.className = 'resize-handle';
         tile.appendChild(handle);
 
+        // Reset button (visible only when floating)
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'reset-btn';
+        resetBtn.title = 'Snap back to grid';
+        resetBtn.innerHTML = '×';
+        resetBtn.addEventListener('click', (e) => { e.stopPropagation(); resetTile(tile); });
+        tile.appendChild(resetBtn);
+
         let startX, startY, startW, startH;
 
-        function applyResize(dx, dy) {
-            const inPresentation = liveContent.classList.contains('presentation-mode');
-            if (inPresentation) {
-                // In presentation mode: scale proportionally via aspect-ratio override
-                const newW = Math.max(80, startW + dx);
-                tile.style.aspectRatio = '';
-                tile.style.width = newW + 'px';
-                tile.style.flex = '0 0 auto';
-            } else {
-                // In grid mode: override grid cell size
-                const newW = Math.max(120, startW + dx);
-                const newH = Math.max(80, startH + dy);
-                tile.style.gridColumn = 'auto';
-                tile.style.gridRow = 'auto';
-                tile.style.width = newW + 'px';
-                tile.style.height = newH + 'px';
+        function onDown(cx, cy) {
+            const rect = tile.getBoundingClientRect();
+            startX = cx;
+            startY = cy;
+            startW = rect.width;
+            startH = rect.height;
+
+            if (!tile.classList.contains('floating')) {
+                makeFloating(tile, rect.left, rect.top, rect.width, rect.height);
             }
         }
 
-        function onMouseDown(e) {
+        function onMove(cx, cy) {
+            const w = Math.max(100, startW + (cx - startX));
+            const h = Math.max(70, startH + (cy - startY));
+            tile.style.width = w + 'px';
+            tile.style.height = h + 'px';
+        }
+
+        // Mouse
+        handle.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            startX = e.clientX;
-            startY = e.clientY;
-            startW = tile.offsetWidth;
-            startH = tile.offsetHeight;
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        }
-        function onMouseMove(e) {
-            applyResize(e.clientX - startX, e.clientY - startY);
-        }
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        }
-        handle.addEventListener('mousedown', onMouseDown);
-
-        // Touch resize
-        handle.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            startW = tile.offsetWidth;
-            startH = tile.offsetHeight;
-            function onTouchMove(e2) {
-                const t = e2.touches[0];
-                applyResize(t.clientX - startX, t.clientY - startY);
-            }
-            function onTouchEnd() {
-                document.removeEventListener('touchmove', onTouchMove);
-                document.removeEventListener('touchend', onTouchEnd);
-            }
-            document.addEventListener('touchmove', onTouchMove, { passive: true });
-            document.addEventListener('touchend', onTouchEnd);
-        }, { passive: false });
-
-        // Double-click handle to reset to auto
-        handle.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            tile.style.width = '';
-            tile.style.height = '';
-            tile.style.aspectRatio = '';
-            tile.style.flex = '';
-            tile.style.gridColumn = '';
-            tile.style.gridRow = '';
+            onDown(e.clientX, e.clientY);
+            function mm(e) { onMove(e.clientX, e.clientY); }
+            function mu() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); }
+            document.addEventListener('mousemove', mm);
+            document.addEventListener('mouseup', mu);
         });
+
+        // Touch
+        handle.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            const t = e.touches[0];
+            onDown(t.clientX, t.clientY);
+            function tm(e) { const t = e.touches[0]; onMove(t.clientX, t.clientY); }
+            function te() { document.removeEventListener('touchmove', tm); document.removeEventListener('touchend', te); }
+            document.addEventListener('touchmove', tm, { passive: true });
+            document.addEventListener('touchend', te);
+        }, { passive: false });
     }
 
     // ── Presentation Mode ──
@@ -1478,6 +1492,8 @@
     // ── Shared Teardown ──
     function tearDown() {
         VibeLive.exitRoom(); // SDK auto-removes all registered tiles
+        // Clean up any floating tiles
+        document.querySelectorAll('.video-tile.floating').forEach(t => t.remove());
         cameraGrid.innerHTML = '';
         screenshareGrid.innerHTML = '';
         previewContainer.innerHTML = '';
