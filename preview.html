@@ -143,10 +143,8 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            gap: 10px;
+            padding: 10px;
+            gap: 8px;
             overflow: hidden;
             width: 100%;
         }
@@ -155,20 +153,16 @@
         #screenshareGrid {
             display: flex;
             flex-wrap: nowrap;
-            gap: 10px;
-            justify-content: center;
+            gap: 8px;
             width: 100%;
         }
         #screenshareGrid .video-tile {
             flex: 1 1 0;
             min-width: 0;
-            max-width: 100%;
         }
         #cameraGrid {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
+            gap: 6px;
             width: 100%;
         }
 
@@ -319,72 +313,65 @@
         /* Presentation mode */
         .live-content.presentation-mode {
             flex-direction: column;
-            align-items: stretch;
-            justify-content: stretch;
             overflow: hidden;
         }
         .presentation-mode #screenshareGrid {
-            flex: 3;
+            flex: 4;
             min-height: 0;
             display: flex;
             align-items: stretch;
             justify-content: center;
+            gap: 8px;
         }
         .presentation-mode #screenshareGrid .video-tile {
             flex: 1 1 0;
-            max-width: 100%;
         }
-        .presentation-mode #screenshareGrid .video-tile .aspect-spacer {
-            display: none;
-        }
+        .presentation-mode #screenshareGrid .video-tile .aspect-spacer { display: none; }
         .presentation-mode #screenshareGrid .video-tile .video-container {
             position: relative;
             width: 100%;
             height: 100%;
         }
         .presentation-mode #cameraGrid {
-            flex: 1;
-            max-height: 25%;
-            flex-wrap: nowrap;
+            display: flex;
+            flex: 0 1 20%;
+            max-height: 20%;
+            min-height: 60px;
+            gap: 6px;
             overflow-x: auto;
-            gap: 8px;
-            justify-content: center;
-            align-items: stretch;
-            padding: 6px 0;
+            overflow-y: hidden;
         }
         .presentation-mode #cameraGrid .video-tile {
             flex: 1 1 0;
             min-width: 0;
+            max-width: 200px;
+            height: 100%;
         }
-        .presentation-mode #cameraGrid .video-tile .aspect-spacer {
-            display: none;
-        }
+        .presentation-mode #cameraGrid .video-tile .aspect-spacer { display: none; }
         .presentation-mode #cameraGrid .video-tile .video-container {
             position: relative;
             width: 100%;
             height: 100%;
         }
+        /* 2 shares: more dominant */
+        .live-content.shares-2 #screenshareGrid { flex: 5; }
+        .live-content.shares-2 #cameraGrid {
+            flex: 0 1 15%;
+            max-height: 15%;
+            min-height: 50px;
+        }
+        .presentation-mode #cameraGrid .video-tile { max-width: 160px; }
 
-        /* Mobile */
         @media (max-width: 640px) {
             .topbar { padding: 8px 12px; }
             .topbar-left { font-size: 13px; }
             .room-code-pill { font-size: 11px; padding: 3px 7px; }
             .topbar-btn { font-size: 11px; padding: 3px 8px; }
-
-            .live-content { padding: 8px; gap: 6px; }
-
-            .presentation-mode #screenshareGrid { flex-wrap: wrap; gap: 6px; }
+            .live-content { padding: 6px; gap: 4px; }
+            .presentation-mode #screenshareGrid { flex-wrap: wrap; gap: 4px; }
             .presentation-mode #screenshareGrid .video-tile { flex: 1 1 100%; }
-            .presentation-mode #cameraGrid {
-                justify-content: flex-start;
-                gap: 6px;
-            }
-            .presentation-mode #cameraGrid .video-tile {
-                flex: 0 0 120px;
-                max-width: 120px;
-            }
-
+            .presentation-mode #cameraGrid { min-height: 50px; gap: 4px; }
+            .presentation-mode #cameraGrid .video-tile { flex: 0 0 100px; max-width: 100px; }
             .video-placeholder .initials { width: 40px; height: 40px; font-size: 16px; }
             .member-info { padding: 4px 6px; }
             .member-name { font-size: 10px; }
@@ -392,25 +379,20 @@
             .indicator { width: 20px; height: 20px; }
             .indicator svg { width: 11px; height: 11px; }
             .video-tile { border-radius: 10px; }
-
             .ctrl-btn { width: 48px; height: 48px; min-width: 48px; }
             .controls-bar { gap: 8px; padding: 10px 12px; }
         }
-
-        /* Landscape mobile */
         @media (max-height: 500px) and (orientation: landscape) {
             .topbar { padding: 4px 12px; }
             .topbar-left { font-size: 12px; }
             .live-content { padding: 4px; gap: 4px; }
-            .controls-bar { padding: 6px 12px; }
-            .ctrl-btn { width: 40px; height: 40px; border-radius: 10px; }
+            .controls-bar { padding: 4px 12px; }
+            .ctrl-btn { width: 36px; height: 36px; border-radius: 8px; }
+            .ctrl-btn svg { width: 18px; height: 18px; }
             .member-info { padding: 2px 4px; }
             .member-name { font-size: 9px; }
-            .video-placeholder .initials { width: 32px; height: 32px; font-size: 14px; }
-            .presentation-mode #cameraGrid .video-tile {
-                flex: 0 0 100px;
-                max-width: 100px;
-            }
+            .video-placeholder .initials { width: 28px; height: 28px; font-size: 12px; }
+            .presentation-mode #cameraGrid .video-tile { flex: 0 0 90px; max-width: 90px; }
         }
 
         /* Preview badge */
@@ -456,7 +438,7 @@
 
 <!-- Live Screen -->
 <div class="live-screen">
-    <div class="live-content presentation-mode">
+    <div class="live-content presentation-mode shares-2">
         <!-- Screenshare Grid: 2 shares side by side -->
         <div id="screenshareGrid"></div>
         <!-- Camera Grid: 8 participants -->
