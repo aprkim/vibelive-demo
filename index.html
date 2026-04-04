@@ -757,9 +757,8 @@
             overflow-y: hidden;
         }
         .presentation-mode #cameraGrid .video-tile {
-            flex: 1 1 0;
-            min-width: 0;
-            max-width: 200px;
+            flex: 0 0 auto;
+            width: min(200px, 20%);
             height: 100%;
         }
 
@@ -771,12 +770,12 @@
             min-height: 50px;
         }
 
-        /* Many participants in presentation: cap tile width */
+        /* Many participants in presentation: smaller tiles */
         .presentation-mode.camera-5 #cameraGrid .video-tile,
         .presentation-mode.camera-6 #cameraGrid .video-tile,
         .presentation-mode.camera-7 #cameraGrid .video-tile,
         .presentation-mode.camera-8 #cameraGrid .video-tile {
-            max-width: 160px;
+            width: min(160px, 12%);
         }
 
         @media (max-width: 640px) {

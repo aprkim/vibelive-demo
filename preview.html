@@ -343,9 +343,8 @@
             overflow-y: hidden;
         }
         .presentation-mode #cameraGrid .video-tile {
-            flex: 1 1 0;
-            min-width: 0;
-            max-width: 200px;
+            flex: 0 0 auto;
+            width: min(200px, 20%);
             height: 100%;
         }
         .presentation-mode #cameraGrid .video-tile .aspect-spacer { display: none; }
@@ -361,7 +360,7 @@
             max-height: 15%;
             min-height: 50px;
         }
-        .presentation-mode #cameraGrid .video-tile { max-width: 160px; }
+        .presentation-mode #cameraGrid .video-tile { width: min(160px, 12%); }
 
         @media (max-width: 640px) {
             .topbar { padding: 8px 12px; }
