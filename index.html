@@ -693,7 +693,7 @@
             overflow: hidden;
         }
         .presentation-mode #screenshareGrid {
-            flex: 1;
+            flex: 3;
             min-height: 0;
             display: flex;
             align-items: stretch;
@@ -712,25 +712,27 @@
             height: 100%;
         }
         .presentation-mode #cameraGrid {
-            flex: 0 0 auto;
+            flex: 1;
+            max-height: 25%;
             flex-wrap: nowrap;
             overflow-x: auto;
             gap: 8px;
             justify-content: center;
+            align-items: stretch;
             padding: 6px 0;
         }
         .presentation-mode #cameraGrid .video-tile {
             flex: 1 1 0;
             min-width: 0;
         }
-        .presentation-mode .camera-1 .video-tile { max-width: 100%; }
-        .presentation-mode .camera-2 .video-tile { max-width: calc(50% - 4px); }
-        .presentation-mode .camera-3 .video-tile { max-width: calc(33.33% - 6px); }
-        .presentation-mode .camera-4 .video-tile { max-width: calc(25% - 6px); }
-        .presentation-mode .camera-5 .video-tile,
-        .presentation-mode .camera-6 .video-tile { max-width: calc(16.66% - 7px); }
-        .presentation-mode .camera-7 .video-tile,
-        .presentation-mode .camera-8 .video-tile { max-width: calc(12.5% - 7px); }
+        .presentation-mode #cameraGrid .video-tile .aspect-spacer {
+            display: none;
+        }
+        .presentation-mode #cameraGrid .video-tile .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
         @media (max-width: 640px) {
             .presentation-mode #cameraGrid {
                 justify-content: flex-start;
