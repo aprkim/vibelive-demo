@@ -752,16 +752,18 @@
             display: flex;
             flex: 0 1 20%;
             max-height: 20%;
-            min-height: 60px;
+            min-height: 40px;
             gap: 6px;
             justify-content: center;
+            align-items: stretch;
             overflow-x: auto;
             overflow-y: hidden;
         }
         .presentation-mode #cameraGrid .video-tile {
             flex: 0 0 auto;
-            width: min(200px, 20%);
             height: 100%;
+            aspect-ratio: 16 / 9;
+            width: auto;
         }
 
         /* 2 shares: even more dominant (85/15 split) */
@@ -769,27 +771,13 @@
         .live-content.shares-2 #cameraGrid {
             flex: 0 1 15%;
             max-height: 15%;
-            min-height: 50px;
+            min-height: 36px;
         }
 
         /* Single camera in presentation: compact pip-style */
         .presentation-mode.camera-1 #cameraGrid {
             flex: 0 0 auto;
             max-height: 12%;
-            min-height: 50px;
-        }
-        .presentation-mode.camera-1 #cameraGrid .video-tile {
-            width: min(140px, 15%);
-            aspect-ratio: 16 / 9;
-            height: auto;
-        }
-
-        /* Many participants in presentation: smaller tiles */
-        .presentation-mode.camera-5 #cameraGrid .video-tile,
-        .presentation-mode.camera-6 #cameraGrid .video-tile,
-        .presentation-mode.camera-7 #cameraGrid .video-tile,
-        .presentation-mode.camera-8 #cameraGrid .video-tile {
-            width: min(160px, 12%);
         }
 
         @media (max-width: 640px) {
@@ -1106,6 +1094,26 @@
         tile.appendChild(handle);
 
         let startX, startY, startW, startH;
+
+        function applyResize(dx, dy) {
+            const inPresentation = liveContent.classList.contains('presentation-mode');
+            if (inPresentation) {
+                // In presentation mode: scale proportionally via aspect-ratio override
+                const newW = Math.max(80, startW + dx);
+                tile.style.aspectRatio = '';
+                tile.style.width = newW + 'px';
+                tile.style.flex = '0 0 auto';
+            } else {
+                // In grid mode: override grid cell size
+                const newW = Math.max(120, startW + dx);
+                const newH = Math.max(80, startH + dy);
+                tile.style.gridColumn = 'auto';
+                tile.style.gridRow = 'auto';
+                tile.style.width = newW + 'px';
+                tile.style.height = newH + 'px';
+            }
+        }
+
         function onMouseDown(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1117,10 +1125,7 @@
             document.addEventListener('mouseup', onMouseUp);
         }
         function onMouseMove(e) {
-            const w = Math.max(160, startW + (e.clientX - startX));
-            tile.style.width = w + 'px';
-            tile.style.maxWidth = w + 'px';
-            tile.style.flex = '0 0 ' + w + 'px';
+            applyResize(e.clientX - startX, e.clientY - startY);
         }
         function onMouseUp() {
             document.removeEventListener('mousemove', onMouseMove);
@@ -1137,10 +1142,7 @@
             startH = tile.offsetHeight;
             function onTouchMove(e2) {
                 const t = e2.touches[0];
-                const w = Math.max(160, startW + (t.clientX - startX));
-                tile.style.width = w + 'px';
-                tile.style.maxWidth = w + 'px';
-                tile.style.flex = '0 0 ' + w + 'px';
+                applyResize(t.clientX - startX, t.clientY - startY);
             }
             function onTouchEnd() {
                 document.removeEventListener('touchmove', onTouchMove);
@@ -1149,6 +1151,17 @@
             document.addEventListener('touchmove', onTouchMove, { passive: true });
             document.addEventListener('touchend', onTouchEnd);
         }, { passive: false });
+
+        // Double-click handle to reset to auto
+        handle.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            tile.style.width = '';
+            tile.style.height = '';
+            tile.style.aspectRatio = '';
+            tile.style.flex = '';
+            tile.style.gridColumn = '';
+            tile.style.gridRow = '';
+        });
     }
 
     // ── Presentation Mode ──

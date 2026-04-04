@@ -336,7 +336,7 @@
             display: flex;
             flex: 0 1 20%;
             max-height: 20%;
-            min-height: 60px;
+            min-height: 40px;
             gap: 6px;
             justify-content: center;
             overflow-x: auto;
@@ -344,8 +344,9 @@
         }
         .presentation-mode #cameraGrid .video-tile {
             flex: 0 0 auto;
-            width: min(200px, 20%);
             height: 100%;
+            aspect-ratio: 16 / 9;
+            width: auto;
         }
         .presentation-mode #cameraGrid .video-tile .aspect-spacer { display: none; }
         .presentation-mode #cameraGrid .video-tile .video-container {
@@ -358,9 +359,9 @@
         .live-content.shares-2 #cameraGrid {
             flex: 0 1 15%;
             max-height: 15%;
-            min-height: 50px;
+            min-height: 36px;
         }
-        .presentation-mode #cameraGrid .video-tile { width: min(160px, 12%); }
+        .presentation-mode #cameraGrid .video-tile { max-height: 100%; }
 
         @media (max-width: 640px) {
             .topbar { padding: 8px 12px; }
