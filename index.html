@@ -1807,17 +1807,16 @@
 
         const userMsg = getUserMessage(error);
 
-        // Retriable — show toast with retry hint
+        // Retriable — show toast with retry
         if (retriable) {
-            showToast(userMsg, { type: 'error', hint, action: 'Retry', onAction: () => {
-                // Generic retry: re-attempt the context action
+            showToast(userMsg, { type: 'error', action: 'Retry', onAction: () => {
                 console.log(`Retrying ${context}...`);
             }});
             return;
         }
 
         // Non-retriable — show persistent alert
-        showAlert(userMsg, { hint });
+        showAlert(userMsg);
     });
 
     // RECOMMENDED: warning
