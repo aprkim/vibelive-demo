@@ -1010,11 +1010,28 @@
     const ICONS_SHRINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
 
     // ── Toast Notifications ──
+    const activeToasts = new Set();
+
     function showToast(message, opts = {}) {
         const { type = 'info', duration = 4000, hint, action, onAction } = opts;
+
+        // Deduplicate — don't show the same message twice
+        if (activeToasts.has(message)) return;
+        activeToasts.add(message);
+
         const container = $('toastContainer');
+
+        // Max 1 error toast at a time — clear previous
+        if (type === 'error') {
+            container.querySelectorAll('.toast.error').forEach(t => {
+                activeToasts.delete(t.dataset.msg);
+                t.remove();
+            });
+        }
+
         const toast = document.createElement('div');
         toast.className = `toast${type === 'error' ? ' error' : ''}`;
+        toast.dataset.msg = message;
 
         let html = `<span>${message}</span>`;
         if (hint) html += `<span class="toast-hint">${hint}</span>`;
@@ -1023,19 +1040,22 @@
         }
         toast.innerHTML = html;
 
+        function removeToast() {
+            activeToasts.delete(message);
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }
+
         if (action && onAction) {
-            toast.querySelector('.toast-btn.primary').addEventListener('click', () => { toast.remove(); onAction(); });
+            toast.querySelector('.toast-btn.primary').addEventListener('click', () => { removeToast(); onAction(); });
         }
         if (action) {
-            toast.querySelector('.dismiss-btn').addEventListener('click', () => { toast.remove(); });
+            toast.querySelector('.dismiss-btn').addEventListener('click', removeToast);
         }
 
         container.appendChild(toast);
         if (!action) {
-            setTimeout(() => {
-                toast.classList.add('fade-out');
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+            setTimeout(removeToast, duration);
         }
     }
 
