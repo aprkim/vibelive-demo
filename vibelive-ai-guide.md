@@ -1502,25 +1502,55 @@ VibeLive.on('error', (context, error) => {
 
     // Retriable — show dismissible toast with retry
     if (retriable) {
-        showToast(message, { action: 'Retry', hint });
+        console.warn(`[VibeLive] [${context}] ${code}: ${message}`, hint);
+        showToast(message, { action: 'Retry' });
         return;
     }
 
     // Non-retriable — show persistent alert
-    showAlert(message, { hint });
+    console.warn(`[VibeLive] [${context}] ${code}: ${message}`, hint);
+    showAlert(message);
 });
+```
+
+## What to Show vs. What to Log
+
+**CRITICAL: Never display `error.code`, `error.context`, `error.hint`, `error.retriable`, or `error.cause` to users.** These fields are for developer debugging only.
+
+| Field | Show to User? | Log to Console? |
+|-------|:---:|:---:|
+| Friendly message (from User Message column) | Yes | Yes |
+| `error.code` | No | Yes |
+| `error.context` | No | Yes |
+| `error.hint` | No | Yes |
+| `error.retriable` | No | Yes |
+| `error.cause` | No | Yes |
+
+**Correct:**
+```js
+// User sees: "You were removed from this room."
+// Console gets: full debug info
+console.warn(`[VibeLive] [${context}] ${code}: ${message}`, hint);
+showModal('You were removed from this room.');
+```
+
+**Wrong:**
+```js
+// Never show this to a user:
+showModal(`[${code}] ${message}\ncontext: ${context}\nhint: ${hint}\nretriable: ${retriable}`);
 ```
 
 ## UX Rules
 
-1. **Never show error codes to users.** Always map to a friendly message.
-2. **Never use native `alert()`.** Use styled toasts or modals.
-3. **Retriable errors get a toast** with an optional retry button.
-4. **Non-retriable errors get a persistent message** — don't auto-dismiss.
-5. **`SCREENSHARE_CANCELLED` is silent** — the user chose to cancel.
-6. **`ROOM_KICKED` redirects** — do not auto-rejoin.
-7. **Network reconnection** — show a subtle indicator, hide when restored.
-8. **Permission errors** — guide the user to fix it (browser settings, close other apps).
+1. **Never show error codes, context, hints, or debug fields to users.** Only show the friendly message.
+2. **Log everything to console** — `code`, `context`, `hint`, `cause` are invaluable for debugging.
+3. **Never use native `alert()`.** Use styled toasts or modals.
+4. **Retriable errors get a toast** with an optional retry button.
+5. **Non-retriable errors get a persistent message** — don't auto-dismiss.
+6. **`SCREENSHARE_CANCELLED` is silent** — the user chose to cancel.
+7. **`ROOM_KICKED` redirects** — do not auto-rejoin.
+8. **Network reconnection** — show a subtle indicator, hide when restored.
+9. **Permission errors** — guide the user to fix it (browser settings, close other apps).
 
 ---
 

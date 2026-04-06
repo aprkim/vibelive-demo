@@ -866,6 +866,34 @@
         /* Persistent alert (non-retriable errors) */
         .toast.persistent { border-color: var(--dangerBorder); color: var(--dangerText); }
 
+        /* Network status banners */
+        #networkBanner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10001;
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+        #networkBanner.offline {
+            display: block;
+            background: var(--dangerBorder);
+            color: #fff;
+        }
+        #networkBanner.reconnecting {
+            display: block;
+            background: var(--accentBorder);
+            color: var(--text);
+        }
+        #networkBanner.fade-out {
+            opacity: 0;
+        }
+
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
@@ -876,6 +904,9 @@
 
 <!-- Toast Container -->
 <div id="toastContainer"></div>
+
+<!-- Network Status Banner -->
+<div id="networkBanner"></div>
 
 <!-- Theme Toggle -->
 <button id="themeToggle" title="Toggle theme">
@@ -1740,6 +1771,7 @@
     // RECOMMENDED: localJoined -- transition to live screen
     VibeLive.on('localJoined', () => {
         showScreen('live');
+        hideNetworkBanner();
 
         // Move local tiles from preview to live grids
         const localCamTile = document.getElementById(`tile-${VibeLive.memberId}-camera`);
@@ -1783,6 +1815,30 @@
         showKickedModal('You were removed from the room by the host.');
     });
 
+    // ── Network Status Banner ──
+    const networkBanner = $('networkBanner');
+
+    function showNetworkBanner(type, text) {
+        networkBanner.className = type; // 'offline' or 'reconnecting'
+        networkBanner.textContent = text;
+        networkBanner.classList.remove('fade-out');
+    }
+
+    function hideNetworkBanner() {
+        networkBanner.classList.add('fade-out');
+        setTimeout(() => { networkBanner.className = ''; networkBanner.textContent = ''; }, 300);
+    }
+
+    // Auto-retry on coming back online
+    window.addEventListener('online', () => {
+        hideNetworkBanner();
+        showToast('Back online.', { type: 'info', duration: 2000 });
+    });
+
+    window.addEventListener('offline', () => {
+        showNetworkBanner('offline', 'You\'re offline. Check your internet connection.');
+    });
+
     // REQUIRED: error — per Error Guide v1.0
     VibeLive.on('error', (context, error) => {
         const { code, message, hint, retriable } = error || {};
@@ -1793,17 +1849,46 @@
             return;
         }
 
-        // User cancelled screenshare — not an error
+        // User cancelled screenshare — silent, not an error
         if (code === 'SCREENSHARE_CANCELLED') return;
 
-        // Kicked — handled by the 'kicked' event, but catch here too
+        // Always log full debug info to console
+        console.warn(`[VibeLive] [${context}] ${code}: ${message}`, hint);
+
+        // Kicked — special UX flow
         if (code === 'ROOM_KICKED') {
             tearDown();
             showKickedModal('You were removed from this room.');
             return;
         }
 
-        console.error(`[VibeLive ${context}]`, code || '', message);
+        // Permission denied — show guidance
+        if (code === 'MEDIA_PERMISSION_DENIED') {
+            showAlert('Camera/mic access was blocked. Please allow access in your browser settings and reload the page.');
+            return;
+        }
+
+        // Device busy — show retry
+        if (code === 'MEDIA_DEVICE_BUSY') {
+            showToast('Your camera is being used by another app. Close it and try again.', {
+                type: 'error',
+                action: 'Retry',
+                onAction: () => { VibeLive.setVideo(true); }
+            });
+            return;
+        }
+
+        // WebSocket disconnected — subtle reconnecting indicator
+        if (code === 'NETWORK_WS_DISCONNECTED') {
+            showNetworkBanner('reconnecting', 'Connection lost. Reconnecting...');
+            return;
+        }
+
+        // Offline
+        if (code === 'NETWORK_OFFLINE') {
+            showNetworkBanner('offline', 'You\'re offline. Check your internet connection.');
+            return;
+        }
 
         const userMsg = getUserMessage(error);
 
@@ -1815,7 +1900,7 @@
             return;
         }
 
-        // Non-retriable — show persistent alert
+        // Non-retriable — show persistent alert (friendly message only)
         showAlert(userMsg);
     });
 
