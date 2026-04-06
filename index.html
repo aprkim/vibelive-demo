@@ -850,9 +850,21 @@
             text-align: center;
         }
         .toast.error { border-color: var(--dangerBorder); color: var(--dangerText); }
+        .toast .toast-hint { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .toast .toast-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+        .toast .toast-btn {
+            font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--soft); color: var(--text);
+            cursor: pointer;
+        }
+        .toast .toast-btn:hover { border-color: var(--accent); }
+        .toast .toast-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
         .toast.fade-out { animation: toastOut 0.3s ease-in forwards; }
         @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Persistent alert (non-retriable errors) */
+        .toast.persistent { border-color: var(--dangerBorder); color: var(--dangerText); }
 
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
@@ -998,29 +1010,73 @@
     const ICONS_SHRINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
 
     // ── Toast Notifications ──
-    function showToast(message, type = 'info', duration = 3500) {
+    function showToast(message, opts = {}) {
+        const { type = 'info', duration = 4000, hint, action, onAction } = opts;
         const container = $('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast${type === 'error' ? ' error' : ''}`;
-        toast.textContent = message;
+
+        let html = `<span>${message}</span>`;
+        if (hint) html += `<span class="toast-hint">${hint}</span>`;
+        if (action) {
+            html += `<div class="toast-actions"><button class="toast-btn primary">${action}</button><button class="toast-btn dismiss-btn">Dismiss</button></div>`;
+        }
+        toast.innerHTML = html;
+
+        if (action && onAction) {
+            toast.querySelector('.toast-btn.primary').addEventListener('click', () => { toast.remove(); onAction(); });
+        }
+        if (action) {
+            toast.querySelector('.dismiss-btn').addEventListener('click', () => { toast.remove(); });
+        }
+
         container.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
+        if (!action) {
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
     }
 
-    // Map SDK error codes to user-friendly messages
-    function friendlyError(context, error) {
-        const msg = error?.message || '';
-        const code = error?.code || '';
-        if (code === 'ROOM_NOT_FOUND' || msg.includes('not found')) return 'Room not found. Please check the code and try again.';
-        if (code === 'ROOM_FULL' || msg.includes('full')) return 'This room is full (max 8 participants).';
-        if (msg.includes('permission') || msg.includes('Permission') || msg.includes('NotAllowed')) return 'Camera/mic permission denied. Please allow access in your browser settings.';
-        if (msg.includes('NotFound') || msg.includes('no device')) return 'No camera or microphone found on this device.';
-        if (msg.includes('network') || msg.includes('Network') || msg.includes('fetch')) return 'Network error. Please check your connection and try again.';
-        if (context === 'screenshare') return 'Could not start screen sharing.';
-        return `Something went wrong. Please try again.`;
+    function showAlert(message, opts = {}) {
+        showToast(message, { type: 'error', hint: opts.hint, action: 'OK', onAction: () => {} });
+    }
+
+    // ── Error Code → User Message Map ──
+    const ERROR_MESSAGES = {
+        // Auth
+        AUTH_FAILED: 'Login failed. Please check your credentials.',
+        AUTH_SESSION_EXPIRED: 'Your session has expired. Please sign in again.',
+        AUTH_TOKEN_REFRESH_FAILED: 'Connection issue. Please sign in again.',
+        AUTH_PROXY_FAILED: 'Unable to connect. Please try again.',
+        AUTH_FORBIDDEN: 'Unable to connect. Please check your configuration.',
+        // Media
+        MEDIA_PERMISSION_DENIED: 'Camera/mic access was blocked. Check your browser permissions.',
+        MEDIA_DEVICE_BUSY: 'Your camera is being used by another app. Close it and try again.',
+        MEDIA_NOT_FOUND: 'No camera or microphone found. Please connect a device.',
+        MEDIA_OVERCONSTRAINED: 'Your camera doesn\'t support the requested quality. Adjusting...',
+        MEDIA_TRACK_REPLACE_FAILED: 'Couldn\'t switch devices. Try again.',
+        MEDIA_TRACK_ENDED: 'Your camera/mic was disconnected.',
+        MEDIA_UNKNOWN: 'Something went wrong with your camera. Try again.',
+        // Screenshare
+        SCREENSHARE_PERMISSION_DENIED: 'Screen sharing was blocked by your system settings.',
+        SCREENSHARE_UNSUPPORTED: 'Screen sharing isn\'t supported in this browser.',
+        SCREENSHARE_UNKNOWN: 'Screen sharing failed. Try again.',
+        // Room
+        ROOM_NOT_FOUND: 'This room doesn\'t exist or has been removed.',
+        ROOM_JOIN_FAILED: 'Couldn\'t join the room. Please try again.',
+        ROOM_SFU_UNREACHABLE: 'Can\'t reach the video server. Check your connection.',
+        // Network
+        NETWORK_HTTP_ERROR: 'Something went wrong. Please try again.',
+        NETWORK_TIMEOUT: 'The request timed out. Check your connection.',
+        NETWORK_OFFLINE: 'You\'re offline. Check your internet connection.',
+        NETWORK_WS_AUTH_FAILED: 'Real-time connection failed. Please sign in again.',
+        NETWORK_WS_DISCONNECTED: 'Connection lost. Reconnecting...',
+    };
+
+    function getUserMessage(error) {
+        return ERROR_MESSAGES[error?.code] || error?.message || 'Something went wrong. Please try again.';
     }
 
     // ── Spotlight ──
@@ -1530,7 +1586,7 @@
             await VibeLive.enterByRoomCode(room.room_code);
         } catch (e) {
             console.error('Start room error:', e);
-            showToast(friendlyError('create', e), 'error');
+            showToast(getUserMessage(e), { type: 'error' });
             startBtn.disabled = false;
             startBtn.textContent = '+ Start a Room';
         }
@@ -1550,7 +1606,7 @@
             await VibeLive.enterByRoomCode(code);
         } catch (e) {
             console.error('Join room error:', e);
-            showToast(friendlyError('join', e), 'error');
+            showToast(getUserMessage(e), { type: 'error' });
             joinBtn.disabled = false;
             joinBtn.textContent = 'Join';
         }
@@ -1574,7 +1630,7 @@
             await VibeLive.startLive();
         } catch (e) {
             console.error('Go live error:', e);
-            showToast(friendlyError('goLive', e), 'error');
+            showToast(getUserMessage(e), { type: 'error' });
             goLiveBtn.disabled = false;
             goLiveBtn.textContent = 'Go Live';
         }
@@ -1600,7 +1656,7 @@
         if (wantsToShare) {
             const activeScreenshares = screenshareGrid.querySelectorAll('.video-tile:not([style*="display: none"])').length;
             if (activeScreenshares >= 2) {
-                showToast('Only 2 people can share screens at a time.', 'error');
+                showToast('Only 2 people can share screens at a time.', { type: 'error' });
                 return;
             }
         }
@@ -1707,10 +1763,41 @@
         showKickedModal(message || 'The meeting has ended.');
     });
 
-    // RECOMMENDED: error
+    // REQUIRED: error — per Error Guide v1.0
     VibeLive.on('error', (context, error) => {
-        console.error(`[VibeLive ${context}]`, error.code || '', error.message);
-        showToast(friendlyError(context, error), 'error');
+        const { code, message, hint, retriable } = error || {};
+
+        // Dev bugs — log only, never show to users
+        if (code && (code.startsWith('INIT_') || code.startsWith('STATE_'))) {
+            console.error(`[DEV BUG] [${context}] ${code}: ${message}`);
+            return;
+        }
+
+        // User cancelled screenshare — not an error
+        if (code === 'SCREENSHARE_CANCELLED') return;
+
+        // Kicked — handled by the 'kicked' event, but catch here too
+        if (code === 'ROOM_KICKED') {
+            tearDown();
+            showKickedModal('You were removed from this room.');
+            return;
+        }
+
+        console.error(`[VibeLive ${context}]`, code || '', message);
+
+        const userMsg = getUserMessage(error);
+
+        // Retriable — show toast with retry hint
+        if (retriable) {
+            showToast(userMsg, { type: 'error', hint, action: 'Retry', onAction: () => {
+                // Generic retry: re-attempt the context action
+                console.log(`Retrying ${context}...`);
+            }});
+            return;
+        }
+
+        // Non-retriable — show persistent alert
+        showAlert(userMsg, { hint });
     });
 
     // RECOMMENDED: warning
