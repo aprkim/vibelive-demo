@@ -515,6 +515,8 @@
         }
         .ctrl-btn:hover { border-color: var(--accent); }
         .ctrl-btn.active { background: var(--accentSoft); border-color: var(--accent); color: var(--accent); }
+        .ctrl-btn.off { background: var(--dangerBg); border-color: var(--dangerBorder); color: var(--dangerText); }
+        .ctrl-btn.off:hover { background: var(--dangerBorder); color: #fff; }
         .ctrl-btn.danger {
             background: var(--dangerBg);
             border-color: var(--dangerBorder);
@@ -1594,17 +1596,23 @@
     }
 
     // ── Update control button active states ──
+    function updateCtrlBtn(btn, isOn, onIcon, offIcon) {
+        btn.classList.toggle('active', isOn);
+        btn.classList.toggle('off', !isOn);
+        btn.innerHTML = isOn ? onIcon : offIcon;
+    }
+
     function updatePreLiveControls() {
         const s = VibeLive.mediaState;
-        $('preToggleCam').classList.toggle('active', s.videoDetail === 'ON');
-        $('preToggleMic').classList.toggle('active', s.audioDetail === 'ON');
+        updateCtrlBtn($('preToggleCam'), s.videoDetail === 'ON', ICONS.camOn, ICONS.camOff);
+        updateCtrlBtn($('preToggleMic'), s.audioDetail === 'ON', ICONS.micOn, ICONS.micOff);
     }
 
     function updateLiveControls() {
         const s = VibeLive.mediaState;
         const screen = VibeLive.screenState;
-        $('liveToggleCam').classList.toggle('active', s.videoDetail === 'ON');
-        $('liveToggleMic').classList.toggle('active', s.audioDetail === 'ON');
+        updateCtrlBtn($('liveToggleCam'), s.videoDetail === 'ON', ICONS.camOn, ICONS.camOff);
+        updateCtrlBtn($('liveToggleMic'), s.audioDetail === 'ON', ICONS.micOn, ICONS.micOff);
         $('liveToggleScreen').classList.toggle('active', screen.videoDetail === 'ON');
     }
 
