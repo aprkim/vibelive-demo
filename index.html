@@ -410,6 +410,11 @@
         .video-tile[data-is-local="true"][data-stream-type="camera"] .video-container video {
             transform: scaleX(-1);
         }
+        /* Screenshare: contain to show full screen, letterbox with dark bg */
+        .video-tile[data-stream-type="screenshare"] .video-container video {
+            object-fit: contain;
+            background: #000;
+        }
         .video-container video::-webkit-media-controls { display: none !important; }
         .video-container video::-webkit-media-controls-enclosure { display: none !important; }
 
