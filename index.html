@@ -945,6 +945,7 @@
             <input type="text" id="codeInput" placeholder="Room code">
             <button class="btn btn-secondary" id="joinBtn">Join</button>
         </div>
+        <div class="name-hint" id="codeHint">Please enter a room code</div>
     </div>
 </div>
 
@@ -1026,6 +1027,7 @@
     const previewContainer = $('previewContainer');
 
     let nameHintTimer = null;
+    let codeHintTimer = null;
     let localName = '';
     const liveContent = document.querySelector('.live-content');
 
@@ -1342,7 +1344,11 @@
     }
 
     // ── Dynamic Button Priority ──
-    codeInput.addEventListener('input', updateButtonPriority);
+    codeInput.addEventListener('input', () => {
+        updateButtonPriority();
+        $('codeHint').classList.remove('visible');
+        if (codeHintTimer) { clearTimeout(codeHintTimer); codeHintTimer = null; }
+    });
 
     function updateButtonPriority() {
         if (codeInput.value.trim()) {
@@ -1646,7 +1652,13 @@
     joinBtn.addEventListener('click', async () => {
         if (!validateName()) return;
         const code = codeInput.value.trim();
-        if (!code) { codeInput.focus(); return; }
+        if (!code) {
+            $('codeHint').classList.add('visible');
+            codeInput.focus();
+            if (codeHintTimer) clearTimeout(codeHintTimer);
+            codeHintTimer = setTimeout(() => $('codeHint').classList.remove('visible'), 3000);
+            return;
+        }
         localName = nameInput.value.trim();
 
         joinBtn.disabled = true;
