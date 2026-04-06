@@ -1068,8 +1068,12 @@
 
         let html = `<span>${message}</span>`;
         if (hint) html += `<span class="toast-hint">${hint}</span>`;
-        if (action) {
+        if (action && onAction) {
+            // Retriable: action button + dismiss
             html += `<div class="toast-actions"><button class="toast-btn primary">${action}</button><button class="toast-btn dismiss-btn">Dismiss</button></div>`;
+        } else if (action) {
+            // Non-retriable: single dismiss button
+            html += `<div class="toast-actions"><button class="toast-btn dismiss-btn">${action}</button></div>`;
         }
         toast.innerHTML = html;
 
@@ -1082,8 +1086,9 @@
         if (action && onAction) {
             toast.querySelector('.toast-btn.primary').addEventListener('click', () => { removeToast(); onAction(); });
         }
-        if (action) {
-            toast.querySelector('.dismiss-btn').addEventListener('click', removeToast);
+        const dismissBtn = toast.querySelector('.dismiss-btn');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', removeToast);
         }
 
         container.appendChild(toast);
@@ -1092,8 +1097,8 @@
         }
     }
 
-    function showAlert(message, opts = {}) {
-        showToast(message, { type: 'error', hint: opts.hint, action: 'OK', onAction: () => {} });
+    function showAlert(message) {
+        showToast(message, { type: 'error', action: 'Dismiss' });
     }
 
     // ── Error Code → User Message Map ──
