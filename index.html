@@ -579,16 +579,22 @@
 
         /* Mobile */
         @media (max-width: 640px) {
-            /* Topbar compact */
-            .topbar { padding: 8px 12px; }
+            /* Topbar compact — wrap gracefully on narrow screens */
+            .topbar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
             .topbar-left { font-size: 13px; }
+            .topbar-right { flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
             .room-code-pill { font-size: 11px; padding: 3px 7px; }
-            .topbar-btn { font-size: 11px; padding: 3px 8px; }
+            .topbar-btn { font-size: 11px; padding: 3px 8px; white-space: nowrap; }
 
             /* Entry screen */
             #entryScreen { padding: 16px; gap: 12px; }
             .entry-card { padding: 16px; }
+            .entry-card input { font-size: 16px; } /* prevent iOS zoom on focus */
             .preview-container { width: 95% !important; }
+
+            /* Pre-live controls: wrap if needed */
+            .prelive-controls { flex-wrap: wrap; gap: 8px; }
+            .prelive-actions { flex-wrap: wrap; gap: 8px; }
 
             /* Camera grid: 2-col on mobile */
             #cameraGrid { gap: 4px; }
@@ -621,15 +627,27 @@
             .indicator { width: 20px; height: 20px; }
             .indicator svg { width: 11px; height: 11px; }
 
-            /* Controls bar: larger touch targets */
+            /* Controls bar: larger touch targets, prevent overflow */
             .ctrl-btn { width: 48px; height: 48px; min-width: 48px; }
-            .controls-bar { gap: 8px; padding: 10px 12px; }
+            .ctrl-btn.danger { margin-left: 8px; }
+            .controls-bar { gap: 8px; padding: 10px 12px; flex-wrap: wrap; }
 
             /* Video tiles: smaller radius */
             .video-tile { border-radius: 10px; }
 
-            /* Spotlight always visible on touch */
-            .video-tile .spotlight-btn { opacity: 0.7; width: 24px; height: 24px; top: 4px; right: 4px; }
+            /* Floating tile buttons: bigger touch targets on mobile */
+            .video-tile .spotlight-btn { opacity: 0.7; width: 32px; height: 32px; top: 4px; right: 4px; }
+            .video-tile .reset-btn { width: 32px; height: 32px; top: 4px; left: 4px; font-size: 16px; }
+
+            /* Toast notifications: fit within 375px screens */
+            #toastContainer { max-width: calc(100vw - 32px); }
+            .toast { max-width: calc(100vw - 40px); }
+
+            /* Network banner: ensure readability on narrow screens */
+            #networkBanner { padding: 6px 12px; font-size: 11px; }
+
+            /* Kicked modal: ensure padding on small screens */
+            .kicked-card { padding: 20px 16px 16px; }
         }
 
         /* Landscape mobile */
