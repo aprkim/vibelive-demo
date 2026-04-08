@@ -1546,11 +1546,9 @@
         // SDK auto-removes registered tiles on member exit, screenshare end, room exit, or kick.
         VibeLive.registerTile(memberId, streamType, tile);
 
-        // Enable drag and resize for camera tiles
-        if (streamType === 'camera') {
-            enableDrag(tile);
-            enableResize(tile);
-        }
+        // Enable drag and resize for all tiles
+        enableDrag(tile);
+        enableResize(tile);
 
         updateGridLayout();
         return tile;
